@@ -1,4 +1,4 @@
-# interview-laravel-application
+# Technical Interview Challenge 1
 
 ## Installation
 

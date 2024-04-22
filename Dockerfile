@@ -2,7 +2,7 @@ FROM dwchiang/nginx-php-fpm:8.1.27-fpm-alpine3.18-nginx-1.25.4
 
 WORKDIR /var/www/html
 
-COPY --chown=www-data:www-data --chmod=755 src/parkinglot /var/www/html
+COPY --chown=www-data:www-data --chmod=755 src/myapp /var/www/html
 
 ADD https://github.com/mlocati/docker-php-extension-installer/releases/latest/download/install-php-extensions /usr/local/bin/
 
