@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  parking-lot-app:
+    container_name: parking-lot-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    platform: ${DOCKER_PLATFORM:-linux/amd64}
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "8081:80"
+    depends_on:
+      - parking-lot-db
+    volumes:
+      - ./src/parkinglot:/var/www/html
+
+  parking-lot-db:
+    container_name: parking-lot-db
+    image: "kartoza/postgis:${POSTGRES_VERSION:-14}"
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "5430:5432"
+    environment:
+      - POSTGRES_DB=parking_lot
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - "parkinglotdb:/var/lib/postgresql/${POSTGRES_VERSION:-14}"
+
+  parking-lot-cache:
+    container_name: parking-lot-cache
+    image: "redis:alpine"
+    command: redis-server
+    restart: unless-stopped
+    tty: true
+    ports:
+      - "6378:6379"
+
+volumes:
+  parkinglotdb:
