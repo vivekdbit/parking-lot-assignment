@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\ParkingSpotController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,17 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// Health Check
+Route::get('/health', function () {
+    return response()->json(['message' => 'Hello World'], 200);
+});
+
+Route::group([
+    'prefix' => 'v1',
+], function () {
+    Route::prefix('parking-spot')->group(function () {
+        Route::post('{id}/park', [ParkingSpotController::class,'park']);
+        Route::post('{id}/unpark', [ParkingSpotController::class,'unpark']);
+    });
+    Route::get('parking-lot/{id}', [ParkingSpotController::class,'getAvailability']);
 });

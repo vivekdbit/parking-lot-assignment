@@ -1,4 +1,5 @@
-FROM dwchiang/nginx-php-fpm:8.1.27-fpm-alpine3.18-nginx-1.25.4
+#FROM dwchiang/nginx-php-fpm:8.1.27-fpm-alpine3.18-nginx-1.25.4
+FROM dwchiang/nginx-php-fpm:8.3.1-fpm-alpine3.19-nginx-1.25.5
 
 WORKDIR /var/www/html
 
