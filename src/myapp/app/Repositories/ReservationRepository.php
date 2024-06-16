@@ -23,7 +23,6 @@ class ReservationRepository
         $reservation = Reservation::create([
             'spot_type' => SpotType::CAR->value,
             'start_at' => Carbon::now(),
-            'end_at' => Carbon::now()->addHour(),
         ]);
 
         // Attach the parking spot to the reservation
@@ -38,7 +37,6 @@ class ReservationRepository
         return Reservation::create([
             'spot_type' => SpotType::MOTORCYCLE->value,
             'start_at' => Carbon::now(),
-            'end_at' => Carbon::now()->addHour(),
         ])->ParkingSpots()->attach($spot_id);
     }
 
@@ -48,7 +46,6 @@ class ReservationRepository
         $reservation = Reservation::create([
             'spot_type' => SpotType::VAN->value,
             'start_at' => Carbon::now(),
-            'end_at' => Carbon::now()->addHour(),
         ]);
 
         // Attach the multiple parking spots to the reservation
@@ -64,7 +61,9 @@ class ReservationRepository
 
         try {
             // Retrieve the reservation
-            $reservation = Reservation::findOrFail($reservationId);
+            $reservation = Reservation::where('id', $reservationId)->whereNull('end_at')->firstOrFail();
+            $reservation->end_at = Carbon::now();
+            $reservation->save();
 
             // Get the associated parking spots
             $parkingSpots = $reservation->parkingSpots;

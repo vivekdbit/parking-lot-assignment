@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('vehicle_license',15)->nullable();
             $table->enum('spot_type', array_column(SpotType::cases(), 'value'))->default(null);
             $table->dateTime('start_at');
-            $table->dateTime('end_at');
+            $table->dateTime('end_at')->nullable();
             $table->dateTime('paid_at')->nullable();
             $table->timestamps();
         });

@@ -59,7 +59,7 @@ class ParkingSpotController extends Controller
         }
     }
     
-    public function getAvailability($id): JsonResponse
+    public function getAvailability($id): JsonResource
     {
         try {
             $availableSpots = $this->parkingSpotService->getParkingLotAvailability($id);
