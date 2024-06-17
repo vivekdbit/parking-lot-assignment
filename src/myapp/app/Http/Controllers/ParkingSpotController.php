@@ -40,7 +40,7 @@ class ParkingSpotController extends Controller
     
             return new ReservationResource($reservation);
         } catch (Exception $e) {
-            return response()->json(['message' => $e->getMessage()], 500);
+            return new JsonResource(['message' => $e->getMessage()]);
         }
     }
 
@@ -66,7 +66,7 @@ class ParkingSpotController extends Controller
             return new ParkingLotAvailabilityResource($availableSpots);
         } catch (\Exception $e) {
             Log::error('Error fetching parking lot availability: ' . $e->getMessage());
-            return response()->json(['error' => 'Internal Server Error'], 500);
+            return new JsonResource(['message' => $e->getMessage()]);
         }
     }
 }

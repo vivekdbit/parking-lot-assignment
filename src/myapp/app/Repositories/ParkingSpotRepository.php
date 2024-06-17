@@ -24,88 +24,74 @@ class ParkingSpotRepository
                     ->get();
     }
 
-    // Book Single Spot
-    public function bookSpot($data, $limit=1)
+    // Select Spot for Booking
+    public function bookSpots($data, $limit=1)
     {
-        // Start a transaction
-        DB::beginTransaction();
+        // Find the parking spot and lock it for update
+        // SKIP LOCKED for checking next record
+        $query = "
+            SELECT id 
+            FROM parking_spots 
+            WHERE parking_lot_id = :parking_lot_id 
+            AND booked_at IS NULL
+            ORDER BY id ASC
+            FOR UPDATE SKIP LOCKED
+            LIMIT :limit
+        ";
 
-        try {
-            // Find the parking spot and lock it for update
-            // SKIP LOCKED for checking next record
-            $query = "
-                SELECT id 
-                FROM parking_spots 
-                WHERE parking_lot_id = :parking_lot_id 
-                AND booked_at IS NULL 
-                FOR UPDATE SKIP LOCKED
-                LIMIT :limit
-            ";
+        return DB::select($query, ['limit' => $limit, 'parking_lot_id' => $data->parking_lot_id]) ?? null;
+    }
 
-            $spot = DB::select($query, ['limit' => $limit, 'parking_lot_id' => $data->parking_lot_id])[0] ?? null;
-
-            if (!$spot) {
-                throw new Exception('Parking spot not available');
-            }
-            
-            // Book the spot
-            ParkingSpot::where('id', $spot->id)->update(['booked_at' => Carbon::now()]);
-            DB::commit();
-
-            //return ParkingSpot::where('id', $spot->id)->first();
-            return $spot->id;
-        } catch (\Exception $e) {
-            // Rollback the transaction on error
-            DB::rollback();
-            throw new Exception('Failed to book parking spot: ' . $e->getMessage());
-        }
+    public function updateSpotsAsBooked($spot_ids)
+    {
+        return ParkingSpot::whereIn('id', $spot_ids)->update(['booked_at' => Carbon::now()]);
     }
 
     // Book Multiple Spot
-    public function bookSpots($data, $limit=1)
-    {
-        try {
-            // Begin transaction
-            DB::beginTransaction();
+    // public function bookSpots($data, $limit=1)
+    // {
+    //     try {
+    //         // Begin transaction
+    //         DB::beginTransaction();
 
-            $query = "
-                SELECT id
-                FROM parking_spots 
-                WHERE parking_lot_id = :parking_lot_id
-                AND booked_at IS NULL
-                ORDER BY id ASC
-                LIMIT :limit
-                FOR UPDATE SKIP LOCKED
-            ";
+    //         $query = "
+    //             SELECT id
+    //             FROM parking_spots 
+    //             WHERE parking_lot_id = :parking_lot_id
+    //             AND booked_at IS NULL
+    //             ORDER BY id ASC
+    //             LIMIT :limit
+    //             FOR UPDATE SKIP LOCKED
+    //         ";
 
-            $spots = DB::select($query, ['limit'=> $limit,'parking_lot_id' => $data->parking_lot_id]) ?? null;
+    //         $spots = DB::select($query, ['limit'=> $limit,'parking_lot_id' => $data->parking_lot_id]) ?? null;
 
-            if (!isset($spots) || count($spots)< $limit ) {
-                // No consecutive spots found
-                DB::rollback(); // Rollback transaction
-                throw new Exception('Parking spot not available');
-            }
+    //         if (!isset($spots) || count($spots)< $limit ) {
+    //             // No consecutive spots found
+    //             DB::rollback(); // Rollback transaction
+    //             throw new Exception('Parking spot not available');
+    //         }
 
-            // Extract IDs from the result objects
-            $spotIds = array_map(function ($spot) {
-                return $spot->id;
-            }, $spots);
+    //         // Extract IDs from the result objects
+    //         $spotIds = array_map(function ($spot) {
+    //             return $spot->id;
+    //         }, $spots);
 
-            // Update spots with current timestamp as booked_at
-            ParkingSpot::whereIn('id', $spotIds)->update(['booked_at' => Carbon::now()]);
+    //         // Update spots with current timestamp as booked_at
+    //         ParkingSpot::whereIn('id', $spotIds)->update(['booked_at' => Carbon::now()]);
 
-            // Commit the transaction
-            DB::commit();
+    //         // Commit the transaction
+    //         DB::commit();
 
-            // Return the IDs of the booked spots
-            return ParkingSpot::whereIn('id', $spotIds)->get();
+    //         // Return the IDs of the booked spots
+    //         return ParkingSpot::whereIn('id', $spotIds)->get();
             
-        } catch (\Exception $e) {
-            // Rollback the transaction on error
-            DB::rollback();
-            throw new \Exception('Failed to book parking spot: ' . $e->getMessage());
-        }
-    }
+    //     } catch (\Exception $e) {
+    //         // Rollback the transaction on error
+    //         DB::rollback();
+    //         throw new \Exception('Failed to book parking spot: ' . $e->getMessage());
+    //     }
+    // }
 
     public function unpark($spot_id)
     {

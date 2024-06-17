@@ -31,13 +31,16 @@ class ReservationRepository
         return $reservation;
     }
 
-    public function createReservationForMotorcycle($spot_id)
+    public function createReservationForMotorcycle($spot_ids)
     {
         // Create a single reservation entry for a car
-        return Reservation::create([
+        $reservation = Reservation::create([
             'spot_type' => SpotType::MOTORCYCLE->value,
             'start_at' => Carbon::now(),
-        ])->ParkingSpots()->attach($spot_id);
+        ]);
+
+        $reservation->parkingSpots()->attach($spot_ids);
+        return $reservation;
     }
 
     public function createReservationsForVan($spot_ids)

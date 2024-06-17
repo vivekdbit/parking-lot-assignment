@@ -5,6 +5,8 @@ use App\DTOs\ParkingSpotDTO;
 use App\Enums\SpotType;
 use App\Repositories\ParkingSpotRepository;
 use App\Repositories\ReservationRepository;
+use Exception;
+use Illuminate\Support\Facades\DB;
 
 class MotorcycleSpotParkingStrategy implements ParkingStrategy
 {
@@ -19,9 +21,29 @@ class MotorcycleSpotParkingStrategy implements ParkingStrategy
 
     public function park(ParkingSpotDTO $data)
     {
-        $spot = $this->parkingSpotRepository->bookSpot($data);
-        
-        // Create reservations for motorcycle
-        return $this->reservationRepository->createReservationForMotorCycle($spot);
+        // Start a transaction
+        DB::beginTransaction();
+
+        try {
+            // Book Spot
+            $spot = $this->parkingSpotRepository->bookSpots($data);
+
+            if (!$spot) {
+                throw new Exception('Parking spot not available');
+            }
+
+            // Update spots as booked
+            $spot_ids = array_column($spot, 'id');
+            $this->parkingSpotRepository->updateSpotsAsBooked($spot_ids);
+
+            // Create reservations for MotorCycle
+            $reservation =  $this->reservationRepository->createReservationForMotorCycle($spot);
+
+            DB::commit();
+            return $reservation;
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw new \Exception('Failed to book parking spot: ' . $e->getMessage());
+        }
     }
 }

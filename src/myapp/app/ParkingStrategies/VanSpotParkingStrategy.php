@@ -4,6 +4,8 @@ namespace App\ParkingStrategies;
 use App\DTOs\ParkingSpotDTO;
 use App\Repositories\ParkingSpotRepository;
 use App\Repositories\ReservationRepository;
+use Exception;
+use Illuminate\Support\Facades\DB;
 
 class VanSpotParkingStrategy implements ParkingStrategy
 {
@@ -27,9 +29,29 @@ class VanSpotParkingStrategy implements ParkingStrategy
 
     private function parkVan(ParkingSpotDTO $data){
         
-        $spots = $this->parkingSpotRepository->bookSpots($data, $this->van_capacity);
+        // Start a transaction
+        DB::beginTransaction();
 
-        // Create reservations for van
-        return $this->reservationRepository->createReservationsForVan($spots->pluck('id')->toArray());
+        try {
+            // Book Spot
+            $spot = $this->parkingSpotRepository->bookSpots($data, $this->van_capacity);
+
+            if (!$spot) {
+                throw new Exception('Parking spot not available');
+            }
+
+            // Update spots as booked
+            $spot_ids = array_column($spot, 'id');
+            $this->parkingSpotRepository->updateSpotsAsBooked($spot_ids);
+
+            // Create reservations for Van
+            $reservation =  $this->reservationRepository->createReservationsForVan($spot_ids);
+
+            DB::commit();
+            return $reservation;
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw new \Exception('Failed to book parking spot: ' . $e->getMessage());
+        }
     }
 }
